@@ -100,6 +100,10 @@ public class LiveVedio extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 
     //get les pertmission
     private void getPermission() {

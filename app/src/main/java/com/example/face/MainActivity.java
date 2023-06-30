@@ -43,18 +43,20 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button selectBtn,predictBtn,captureBtn,liveBtn;
-    ImageView imageView;
-    TextView result;
-    Bitmap bitmap ;
-    static final String TAG = "FACE_DETECT_TAG";
+    private Button selectBtn,predictBtn,captureBtn,liveBtn;
+    private ImageView imageView;
+    private TextView result;
+    private Bitmap bitmap ;
+    private static final String TAG = "FACE_DETECT_TAG";
     FaceDetector detector;
-    Bitmap bitmap1;
+    private Bitmap bitmap1;
 
-    Matrix matrix;
-    int REQUEST_PERMISSION_CAMERA = 20;
-    int witdhaff,heightaff;
-    FemalevsmaleMobilenetv2Ft80f1 model;
+    private Matrix matrix;
+    private final int SELECT_IMAGE = 10;
+    private final int CAPTURE_IMAGE = 12;
+    private final int REQUEST_PERMISSION_CAMERA = 20;
+    private int witdhaff,heightaff;
+    private FemalevsmaleMobilenetv2Ft80f1 model;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent();
             intent.setAction(Intent.ACTION_GET_CONTENT);
             intent.setType("image/*");
-            startActivityForResult(intent, 10);
+            startActivityForResult(intent, SELECT_IMAGE);
 
         });
 
@@ -94,11 +96,8 @@ public class MainActivity extends AppCompatActivity {
 
         //Capture image
         captureBtn.setOnClickListener(view -> {
-            if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);}
-            else {
-            Intent intent =new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(intent,12);}
+            getPermission();
+
         });
 
         //live vedio
@@ -120,37 +119,34 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     private void PrepareImage(Bitmap bitmap){
         Log.d(TAG,"Prepare Image");
-        /////
         matrix = new Matrix();
         matrix.setScale(-1,1);
-        /////
-        
         Bitmap smallerBitmap= Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
 
         InputImage inputImage = InputImage.fromBitmap(smallerBitmap,0);
 
         detector.process(inputImage)
-                .addOnSuccessListener(faces -> {
-                    Log.d(TAG,"onSuccess : Number of faces detected :"+faces.size());
+            .addOnSuccessListener(faces -> {
+                Log.d(TAG,"onSuccess : Number of faces detected :"+faces.size());
 
-                    if(faces.size()>=1) {
-                        cropDetectedFaces(smallerBitmap, faces);
-                        result.setText("");
-                    }
-                    else{
-                        result.setText("No faces detected");
-                        Toast.makeText(MainActivity.this,"No faces detected",Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    //Detsection failed
-                    Log.e(TAG,"onFailed: ",e);
-                    Toast.makeText(MainActivity.this,"Detection failed",Toast.LENGTH_SHORT).show();
-                });
+                if(faces.size()>=1) {
+                    cropDetectedFaces(smallerBitmap, faces);
+                    result.setText("");
+                }
+                else{
+                    result.setText("No faces detected");
+                    Toast.makeText(MainActivity.this,"No faces detected",Toast.LENGTH_SHORT).show();
+                }
+            })
+            .addOnFailureListener(e -> {
+                //Detsection failed
+                Log.e(TAG,"onFailed: ",e);
+                Toast.makeText(MainActivity.this,"Detection failed",Toast.LENGTH_SHORT).show();
+            });
     }
 
     private void cropDetectedFaces(Bitmap bitmap, List<Face> faces) {
-        Log.d(TAG,"crapDetectedFaces");
+        Log.d(TAG,"cropDetectedFaces");
         int j = 0;
         // Create a mutable Bitmap from the original Bitmap
         Bitmap flip = Bitmap.createBitmap(bitmap1,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
@@ -178,15 +174,9 @@ public class MainActivity extends AppCompatActivity {
                     Math.min(width, height),
                     Math.min(width, height)
             );
+
             int val = preduction(caroppedBitmap);
-
-
-            /////////////////////////////////////////////////
-            // Assuming you have a Bitmap object named 'bitmap'
-
-
-
-// Create a Paint object for drawing
+            // Create a Paint object for drawing
             Paint paint = new Paint();
             if(val==1){
                 paint.setColor(Color.BLUE);
@@ -197,16 +187,15 @@ public class MainActivity extends AppCompatActivity {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(5); // Set the width of the rectangle's border
 
-// Define the rectangle coordinates (left, top, right, bottom)
+            // Define the rectangle coordinates (left, top, right, bottom)
             Log.d(TAG, "x+width ");
             int right = width>=height ? height+10+x:width+x;
             int bottom = width>=height ? height+y:width+10+y;
             right = Math.min(right, bitmap.getWidth());
             bottom = Math.min(bottom, bitmap.getHeight());
 
-// Draw the rectangle on the Canvas
+            // Draw the rectangle on the Canvas
             canvas.drawRect(x, y, right, bottom, paint);
-
             j++;
         }
         mutableBitmap = Bitmap.createBitmap(mutableBitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
@@ -215,14 +204,17 @@ public class MainActivity extends AppCompatActivity {
         imageView.setImageBitmap(mutableBitmap);
     }
 
+    //Preduction using our model
     private int preduction(Bitmap bitmap) {
         Log.d(TAG, "preduction: ");
         int i1;
         try {
+            //load model
             model = FemalevsmaleMobilenetv2Ft80f1.newInstance(MainActivity.this);
-            Log.d(TAG, "modelf ");
+            Log.d(TAG, "model loaded ");
             TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 160, 160, 3}, DataType.FLOAT32);
             int[] intValues = new int[160 * 160];
+            //prepare image for our model
             bitmap = Bitmap.createScaledBitmap(bitmap, 160, 160, true);
             bitmap.getPixels(intValues, 0, 160, 0, 0, 160, 160);
             float[] floatValues = new float[160 * 160 * 3];
@@ -241,28 +233,26 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "preduction: 3");
             float prediction = outputFeature0.getFloatValue(0);
             float sigmoidValue = (float) (1.0f / (1.0f + Math.exp(-prediction)));
+            // 0: female  ; 1: male
             i1 = sigmoidValue < 0.5 ? 0 : 1;
 
             return i1;
         } catch (IOException e) {
-
+            Log.d(TAG, "preduction: " + e);
             return -1;
         }
-        //return i1;
     }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
     //gere les activites
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == 10) {
+
+        if (requestCode == SELECT_IMAGE) {
             if(data!=null) {
                 Uri uri = data.getData();
                 try {
 
                     result.setText("");
-                    ///////////
-                    ///////bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
                     try {
                         // Open an input stream for the content URI
                         InputStream inputStream = this.getContentResolver().openInputStream(uri);
@@ -308,24 +298,34 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        else if(requestCode==12){
+        else if(requestCode == CAPTURE_IMAGE){
             result.setText("");
-            //getPermission();
             if(data != null) {
                 bitmap = (Bitmap) data.getExtras().get("data");
-
                 witdhaff = bitmap.getWidth() + 480;
                 heightaff = Math.max((bitmap.getHeight()*witdhaff)/bitmap.getWidth(),360);
-                //result.setText(""+witdhaff+"/"+heightaff);
                 changeBtnheigth(predictBtn,100);
                 bitmap1 = ResizeImage(bitmap);
                 imageView.setImageBitmap(bitmap1);
             }
         }
-
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    private int calculateSampleSize(BitmapFactory.Options options) {
+        int originalWidth = options.outWidth;
+        int originalHeight = options.outHeight;
+        int sampleSize = 1;
+
+        if (originalWidth > 480 || originalHeight > 360) {
+            int widthRatio = Math.round((float) originalWidth / (float) 480);
+            int heightRatio = Math.round((float) originalHeight / (float) 360);
+
+            sampleSize = Math.min(widthRatio, heightRatio);
+        }
+
+        return sampleSize;
+    }
     Bitmap ResizeImage(Bitmap bitmap){
         Bitmap bitmap1;
         witdhaff = bitmap.getWidth() + 480;
@@ -343,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
         button.setLayoutParams(layoutParams);
     }
 
-    //get permission
+    // Permission Camera
     private void getPermission() {
         if (ContextCompat.checkSelfPermission(this, "android.permission.CAMERA") != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{"android.permission.CAMERA"}, 101);
@@ -355,25 +355,7 @@ public class MainActivity extends AppCompatActivity {
     }
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        //if (requestCode == REQUEST_PERMISSION_CAMERA  && grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED){
-            getPermission();
-        //}
+        getPermission();
 
-    }
-
-    ////////
-    private int calculateSampleSize(BitmapFactory.Options options) {
-        int originalWidth = options.outWidth;
-        int originalHeight = options.outHeight;
-        int sampleSize = 1;
-
-        if (originalWidth > 480 || originalHeight > 360) {
-            int widthRatio = Math.round((float) originalWidth / (float) 480);
-            int heightRatio = Math.round((float) originalHeight / (float) 360);
-
-            sampleSize = Math.min(widthRatio, heightRatio);
-        }
-
-        return sampleSize;
     }
 }

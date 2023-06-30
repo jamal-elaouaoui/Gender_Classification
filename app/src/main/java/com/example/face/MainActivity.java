@@ -1,6 +1,5 @@
 package com.example.face;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -43,9 +42,9 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button selectBtn,predictBtn,captureBtn,liveBtn;
-    private ImageView imageView;
-    private TextView result;
+    Button selectBtn,predictBtn,captureBtn,liveBtn;
+    ImageView imageView;
+    TextView result;
     private Bitmap bitmap ;
     private static final String TAG = "FACE_DETECT_TAG";
     FaceDetector detector;
@@ -346,11 +345,11 @@ public class MainActivity extends AppCompatActivity {
     // Permission Camera
     private void getPermission() {
         if (ContextCompat.checkSelfPermission(this, "android.permission.CAMERA") != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{"android.permission.CAMERA"}, 101);
+            ActivityCompat.requestPermissions(this, new String[]{"android.permission.CAMERA"}, REQUEST_PERMISSION_CAMERA);
         }
         else {
             Intent intent =new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(intent,12);
+            startActivityForResult(intent,CAPTURE_IMAGE);
         }
     }
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

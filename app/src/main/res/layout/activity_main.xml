@@ -1,0 +1,102 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" tools:context=".MainActivity">
+
+    <ScrollView
+        android:layout_width="409dp"
+        android:layout_height="729dp"
+        tools:layout_editor_absoluteX="1dp"
+        tools:layout_editor_absoluteY="1dp"
+        tools:ignore="MissingConstraints">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <TextView android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_margin="20dp" android:text="Gender  classifier!"
+                android:textAlignment="center" android:textSize="30dp"/>
+            <ImageView
+                android:layout_width="500dp"
+                android:layout_height="500dp"
+                android:layout_below="@+id/title"
+                android:id="@+id/imageView"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="-10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"/>
+
+            <Button android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:text="Select image"
+                android:layout_below="@+id/imageView"
+                android:id="@+id/selectBtn"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="20dp"/>
+            <Button android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:text="capture image"
+                android:layout_below="@+id/selectBtn"
+                android:id="@+id/cptureBtn"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"/>
+            <Button android:layout_width="300dp"
+                android:layout_height="0dp"
+                android:text="Preduction"
+                android:layout_below="@+id/cptureBtn"
+                android:id="@+id/predictBtn"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"/>
+
+            <TextView
+                android:id="@+id/femme"
+                android:layout_width="126dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/live"
+                android:layout_marginLeft="70dp"
+                android:layout_marginTop="20dp"
+                android:background="@color/pink"
+                android:text="Femme"
+                android:textAlignment="center"
+                android:layout_centerHorizontal="true"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="25dp" />
+
+            <TextView
+                android:id="@+id/homme"
+                android:layout_width="126dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/femme"
+                android:layout_marginLeft="216dp"
+                android:layout_marginTop="20dp"
+                android:background="@color/blue"
+                android:text="Homme"
+                android:textAlignment="center"
+                android:layout_centerHorizontal="true"
+                android:textColor="@color/white"
+                android:textSize="25dp" />
+            <TextView
+                android:id="@+id/result"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/homme"
+                android:textColor="@color/red"
+                android:textAlignment="center"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="20dp"
+                android:textSize="25dp"/>
+
+            <Button
+                android:id="@+id/live"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/predictBtn"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:minHeight="32dp"
+                android:text="Live vedio" />
+        </RelativeLayout>
+    </ScrollView>
+</RelativeLayout>

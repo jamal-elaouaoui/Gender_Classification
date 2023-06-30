@@ -273,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
                         BitmapFactory.decodeStream(inputStream, null, options);
 
                         // Calculate the sample size based on the bitmap dimensions and your desired dimensions
-                        int sampleSize = calculateSampleSize(options, 480, 360);
+                        int sampleSize = calculateSampleSize(options);
 
                         // Reset the input stream and set inJustDecodeBounds to false
                         inputStream = this.getContentResolver().openInputStream(uri);
@@ -362,14 +362,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     ////////
-    private int calculateSampleSize(BitmapFactory.Options options, int desiredWidth, int desiredHeight) {
+    private int calculateSampleSize(BitmapFactory.Options options) {
         int originalWidth = options.outWidth;
         int originalHeight = options.outHeight;
         int sampleSize = 1;
 
-        if (originalWidth > desiredWidth || originalHeight > desiredHeight) {
-            int widthRatio = Math.round((float) originalWidth / (float) desiredWidth);
-            int heightRatio = Math.round((float) originalHeight / (float) desiredHeight);
+        if (originalWidth > 480 || originalHeight > 360) {
+            int widthRatio = Math.round((float) originalWidth / (float) 480);
+            int heightRatio = Math.round((float) originalHeight / (float) 360);
 
             sampleSize = Math.min(widthRatio, heightRatio);
         }

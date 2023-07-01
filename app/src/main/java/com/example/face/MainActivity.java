@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -37,7 +36,6 @@ import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
     Button selectBtn,predictBtn,captureBtn,liveBtn;
     ImageView imageView;
     TextView result;
-    private Bitmap bitmap ;
     private static final String TAG = "FACE_DETECT_TAG";
     FaceDetector detector;
     private Bitmap bitmap1;
@@ -53,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
     private Matrix matrix;
     private final int SELECT_IMAGE = 10;
     private final int CAPTURE_IMAGE = 12;
-    private final int REQUEST_PERMISSION_CAMERA = 20;
-    private int witdhaff,heightaff;
     private FemalevsmaleMobilenetv2Ft80f1 model;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,17 +82,14 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        //Preduction
+        //prediction
         predictBtn.setOnClickListener(view -> {
             PrepareImage(bitmap1);
             changeBtnheigth(predictBtn,0);
         });
 
         //Capture image
-        captureBtn.setOnClickListener(view -> {
-            getPermission();
-
-        });
+        captureBtn.setOnClickListener(view -> getPermission());
 
         //live vedio
         liveBtn.setOnClickListener(view -> {
@@ -174,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
                     Math.min(width, height)
             );
 
-            int val = preduction(caroppedBitmap);
+            int val = prediction(caroppedBitmap);
             // Create a Paint object for drawing
             Paint paint = new Paint();
             if(val==1){
@@ -198,14 +190,14 @@ public class MainActivity extends AppCompatActivity {
             j++;
         }
         mutableBitmap = Bitmap.createBitmap(mutableBitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
-
-        mutableBitmap = Bitmap.createScaledBitmap(mutableBitmap, witdhaff, heightaff, true);
+        mutableBitmap = ResizeImage(mutableBitmap);
+        //mutableBitmap = Bitmap.createScaledBitmap(mutableBitmap, witdhaff, heightaff, true);
         imageView.setImageBitmap(mutableBitmap);
     }
 
-    //Preduction using our model
-    private int preduction(Bitmap bitmap) {
-        Log.d(TAG, "preduction: ");
+    //prediction using our model
+    private int prediction(Bitmap bitmap) {
+        Log.d(TAG, "prediction: ");
         int i1;
         try {
             //load model
@@ -217,19 +209,19 @@ public class MainActivity extends AppCompatActivity {
             bitmap = Bitmap.createScaledBitmap(bitmap, 160, 160, true);
             bitmap.getPixels(intValues, 0, 160, 0, 0, 160, 160);
             float[] floatValues = new float[160 * 160 * 3];
-            Log.d(TAG, "preduction:1 ");
+            Log.d(TAG, "prediction:1 ");
             for (int i = 0; i < intValues.length; ++i) {
                 final int val = intValues[i];
                 floatValues[i * 3] = ((val >> 16) & 0xFF);
                 floatValues[i * 3 + 1] = ((val >> 8) & 0xFF);
                 floatValues[i * 3 + 2] = (val & 0xFF);
             }
-            Log.d(TAG, "preduction:2 ");
+            Log.d(TAG, "prediction:2 ");
             inputFeature0.loadArray(floatValues, new int[]{1, 160, 160, 3});
 
             FemalevsmaleMobilenetv2Ft80f1.Outputs outputs = model.process(inputFeature0);
             TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
-            Log.d(TAG, "preduction: 3");
+            Log.d(TAG, "prediction: 3");
             float prediction = outputFeature0.getFloatValue(0);
             float sigmoidValue = (float) (1.0f / (1.0f + Math.exp(-prediction)));
             // 0: female  ; 1: male
@@ -237,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
 
             return i1;
         } catch (IOException e) {
-            Log.d(TAG, "preduction: " + e);
+            Log.d(TAG, "prediction: " + e);
             return -1;
         }
     }
@@ -246,89 +238,43 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
 
+        Bitmap bitmap;
         if (requestCode == SELECT_IMAGE) {
             if(data!=null) {
                 Uri uri = data.getData();
                 try {
-
                     result.setText("");
-                    try {
-                        // Open an input stream for the content URI
-                        InputStream inputStream = this.getContentResolver().openInputStream(uri);
+                    bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+                    Log.d(TAG, "bitmap resize ");
+                    int width = Math.max(bitmap.getWidth(), 480);
+                    int heigh = Math.max(bitmap.getHeight(), 360);
+                    bitmap1 = Bitmap.createScaledBitmap(bitmap, width, heigh, true);
+                    changeBtnheigth(predictBtn,100);
+                    imageView.setImageBitmap(bitmap1);
 
-                        // Create BitmapFactory.Options object and set inJustDecodeBounds to true to get the bitmap dimensions
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inJustDecodeBounds = true;
-                        BitmapFactory.decodeStream(inputStream, null, options);
 
-                        // Calculate the sample size based on the bitmap dimensions and your desired dimensions
-                        int sampleSize = calculateSampleSize(options);
-
-                        // Reset the input stream and set inJustDecodeBounds to false
-                        inputStream = this.getContentResolver().openInputStream(uri);
-                        options.inJustDecodeBounds = false;
-                        options.inSampleSize = sampleSize;
-
-                        // Decode the subsampled bitmap
-                        bitmap = BitmapFactory.decodeStream(inputStream, null, options);
-
-                        // Use the bitmap as needed
-                        // ...
-
-                        // Close the input stream
-                        inputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    if(bitmap != null){
-                        changeBtnheigth(predictBtn,100);
-                        Log.d(TAG, "bitmap resize ");
-
-                        witdhaff = bitmap.getWidth() + 480;
-                        heightaff = Math.max((bitmap.getHeight()*witdhaff)/bitmap.getWidth(),360);
-                        //result.setText(""+bitmap.getHeight()+"/"+bitmap.getWidth());
-                        bitmap1 = ResizeImage(bitmap);
-                        imageView.setImageBitmap(bitmap1);
-                    }
-
-                } catch (Exception e) {
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
-        else if(requestCode == CAPTURE_IMAGE){
+        else if(requestCode==CAPTURE_IMAGE){
             result.setText("");
-            if(data != null) {
-                bitmap = (Bitmap) data.getExtras().get("data");
-                witdhaff = bitmap.getWidth() + 480;
-                heightaff = Math.max((bitmap.getHeight()*witdhaff)/bitmap.getWidth(),360);
+            if(data != null){
+                bitmap =(Bitmap) data.getExtras().get("data");
                 changeBtnheigth(predictBtn,100);
-                bitmap1 = ResizeImage(bitmap);
-                imageView.setImageBitmap(bitmap1);
-            }
+                int width = Math.max(bitmap.getWidth(), 480);
+                int heigh = Math.max(bitmap.getHeight(), 360);
+                bitmap1 = Bitmap.createScaledBitmap(bitmap, width, heigh, true);
+                imageView.setImageBitmap(bitmap1);}
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    private int calculateSampleSize(BitmapFactory.Options options) {
-        int originalWidth = options.outWidth;
-        int originalHeight = options.outHeight;
-        int sampleSize = 1;
-
-        if (originalWidth > 480 || originalHeight > 360) {
-            int widthRatio = Math.round((float) originalWidth / (float) 480);
-            int heightRatio = Math.round((float) originalHeight / (float) 360);
-
-            sampleSize = Math.min(widthRatio, heightRatio);
-        }
-
-        return sampleSize;
-    }
     Bitmap ResizeImage(Bitmap bitmap){
         Bitmap bitmap1;
-        witdhaff = bitmap.getWidth() + 480;
-        heightaff = Math.max((bitmap.getHeight()*witdhaff)/bitmap.getWidth(),360);
+        int witdhaff = bitmap.getWidth() + 480;
+        int heightaff = Math.max((bitmap.getHeight() * witdhaff) / bitmap.getWidth(), 360);
         bitmap1 = Bitmap.createScaledBitmap(bitmap, witdhaff, heightaff, true);
         return bitmap1;
     }
@@ -345,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
     // Permission Camera
     private void getPermission() {
         if (ContextCompat.checkSelfPermission(this, "android.permission.CAMERA") != PackageManager.PERMISSION_GRANTED) {
+            int REQUEST_PERMISSION_CAMERA = 20;
             ActivityCompat.requestPermissions(this, new String[]{"android.permission.CAMERA"}, REQUEST_PERMISSION_CAMERA);
         }
         else {

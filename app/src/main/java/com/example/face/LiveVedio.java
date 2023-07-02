@@ -470,5 +470,4 @@ public class LiveVedio extends AppCompatActivity {
             return -1;
         }
     }
-
 }

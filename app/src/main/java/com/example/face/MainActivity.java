@@ -356,4 +356,3 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(cameraIntent, CAPTURE_IMAGE);
     }
 }
-
